@@ -1,178 +1,36 @@
-# 🚀 Hackathon React + BlockDAG DApp Starter
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-This repository provides a **ready-to-use React app** with **TailwindCSS**, **Lucide Icons**, **Web3.js**, and a sample **MyToken smart contract** integration for the **BlockDAG EVM-compatible network**.  
-It is designed to help hackathon participants **quickly build and test DApps** without worrying about setup.
+## Getting Started
 
----
-
-## ✨ Features
-
-- ⚡ React 18 + Vite for fast development
-- 🎨 TailwindCSS for styling
-- 🖼️ Lucide React Icons for UI enhancements
-- 🔗 Web3.js for blockchain interaction
-- 🦊 MetaMask integration as the primary wallet
-- 📄 ABI + contract setup example (`MyToken.sol`)
-- 🛠️ Configurable for any **EVM-compatible chain** (including BlockDAG)
-
----
-
-## 📦 Prerequisites
-
-Before starting, ensure you have installed:
-
-- [Node.js](https://nodejs.org/) (>= 18.x recommended)
-- [MetaMask](https://metamask.io/) browser extension
-- A BlockDAG **testnet RPC endpoint** (provided by organizers)
-
----
-
-## 🛠️ Getting Started
-
-### 1. Clone this repo
-
-```bash
-git clone https://github.com/<your-org>/blockdag-dapp-starter.git
-cd blockdag-dapp-starter
-```
-
-### 2. Install dependencies
-
-```bash
-npm install
-```
-
-### 3. Configure environment variables
-
-Create a `.env` file in the root directory and add:
-
-```env
-VITE_CONTRACT_ADDRESS=0xYourDeployedContractAddressHere
-VITE_NETWORK_ID=1234 # Optional: BlockDAG Chain ID
-VITE_RPC_URL=https://blockdag-testnet-rpc-url
-```
-
-Organizers will provide the deployed test contract address.
-
----
-
-## 📄 Contract (MyToken)
-
-We included a sample ERC-20 style contract with ERC-2612 Permit support:
-
-```solidity
-// contracts/MyToken.sol
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
-
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-
-contract MyToken is ERC20, ERC20Permit {
-    constructor() ERC20("MyToken", "MTK") ERC20Permit("MyToken") {}
-}
-```
-
-This contract is already deployed on the BlockDAG testnet.
-Participants can:
-
-- Read token name, symbol, and balance
-- Call transfer() and other ERC-20 methods
-- Use ERC-2612 permit() for gasless approvals
-
----
-
-## 🖥️ Running the App
-
-Start the local dev server:
+First, run the development server:
 
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-Visit: http://localhost:5173
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
----
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## 📌 Usage Flow
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-1. Open the app in your browser
-2. Click Connect Wallet (MetaMask popup will appear)
-3. Ensure you are connected to the BlockDAG Testnet:
-   - RPC URL: https://rpc.blockdag.network
-   - Chain ID: (to be provided by organizers)
-4. Interact with the MyToken contract via UI
+## Learn More
 
----
+To learn more about Next.js, take a look at the following resources:
 
-## 📁 Project Structure
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-```
-src/
- ├─ components/
- │   └─ ConnectWalletButton.jsx   # Wallet connection UI component
- ├─ hooks/
- │   └─ useContract.js            # Custom hook for contract interactions
- ├─ contracts/
- │   ├─ MyToken.json              # ABI file for the contract
- │   └─ MyToken.sol               # Solidity source for reference
- ├─ App.jsx                       # Main application component
- ├─ main.jsx                      # Application entry point
- └─ index.css                     # Tailwind setup and global styles
-```
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-### Component Details
+## Deploy on Vercel
 
-#### App.jsx
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-The main application component that:
-
-- Manages wallet connection state
-- Handles token balance fetching
-- Displays the UI for wallet and token information
-
-#### ConnectWalletButton.jsx
-
-A reusable component that:
-
-- Handles MetaMask connection
-- Displays connected account info
-- Provides copy address and disconnect functionality
-- Shows helpful notifications for connection status
-
-#### useContract.js
-
-A custom hook that:
-
-- Creates an interface to the smart contract
-- Provides methods for all contract functions
-- Includes utility methods for formatting balances
-
----
-
-## 🔧 Future Extensions
-
-Participants can extend the starter by:
-
-- Adding new contract interactions (e.g., NFT minting, DAO voting)
-- Supporting multiple wallets (WalletConnect, Coinbase Wallet)
-- Using state management (Zustand/Recoil/Redux) for bigger apps
-- Adding transaction status & notifications
-- Building a transfer form for token transactions
-- Implementing a token swap interface
-
----
-
-## 📚 Resources
-
-- [BlockDAG Documentation](https://docs.blockdag.network)
-- [Web3.js Documentation](https://web3js.readthedocs.io/)
-- [React Documentation](https://react.dev/)
-- [TailwindCSS Documentation](https://tailwindcss.com/docs)
-- [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts/)
-
----
-
-## 📝 License
-
-MIT
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
