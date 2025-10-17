@@ -1,29 +1,52 @@
 'use client'
-import { useState } from "react";
-import {
-  Eye, EyeOff,
-} from 'lucide-react';
-import { getTypeIcon } from "../lib/utils";
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { getTypeIcon } from '../lib/utils';
 
+//  Define the VaultEntry type
+export interface VaultEntry {
+  id: string;
+  name: string;
+  type: string;
+  number?: string;
+  nameOnCard?: string;
+  content?: string;
+  address?: string;
+  phrase?: string;
+  username?: string;
+  software?: string;
+  [key: string]: any;
+}
 
-export default function VaultEntryCard ({ entry, onSelect }) {
+//  Props for the component
+interface VaultEntryCardProps {
+  entry: VaultEntry;
+  onSelect: (entry: VaultEntry) => void;
+}
+
+export default function VaultEntryCard({ entry, onSelect }: VaultEntryCardProps) {
   const [showSensitive, setShowSensitive] = useState(false);
   const Icon = getTypeIcon(entry.type);
 
   // Function to determine the main descriptive content for the card
-  const getCardDisplayValue = () => {
+  const getCardDisplayValue = (): string => {
     switch (entry.type) {
-      case 'Credit Card':
+      case 'Credit Card': {
         const lastFour = entry.number ? entry.number.slice(-4) : '****';
         return `Card ending in ${lastFour} (${entry.nameOnCard || 'N/A'})`;
+      }
       case 'Secure Note':
-        return entry.content ? entry.content.substring(0, 50) + (entry.content.length > 50 ? '...' : '') : 'Empty Note';
+        return entry.content
+          ? entry.content.substring(0, 50) + (entry.content.length > 50 ? '...' : '')
+          : 'Empty Note';
       case 'Wallet Address':
-        return entry.address ? `${entry.address.substring(0, 10)}...${entry.address.slice(-5)}` : 'No Address';
+        return entry.address
+          ? `${entry.address.substring(0, 10)}...${entry.address.slice(-5)}`
+          : 'No Address';
       case 'Seed Phrase':
-        return showSensitive ? entry.phrase : '•••••••••••••••• (Click to view details)';
+        return showSensitive ? entry.phrase || '' : '•••••••••••••••• (Click to view details)';
       case 'Login':
-        return entry.username;
+        return entry.username || 'Unknown User';
       case 'Keys':
         return entry.software || 'Software Key';
       default:
@@ -33,7 +56,7 @@ export default function VaultEntryCard ({ entry, onSelect }) {
 
   const isSensitive = entry.type !== 'Secure Note';
 
-  return (
+   return (
     <div
       className="bg-gray-800 p-5 rounded-xl shadow-lg border border-purple-800 transition duration-300 transform hover:scale-[1.02] cursor-pointer"
       onClick={() => onSelect(entry)} // Added click handler to open details
