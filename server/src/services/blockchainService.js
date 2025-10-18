@@ -1,5 +1,5 @@
 const { web3, ethersProvider, wallet } = require('../config/web3');
-const TokenABI = require('../../artifacts/contracts/SimpleToken.sol/SimpleToken.json').abi;
+const TokenABI = require('../../').abi;
 
 class BlockchainService {
   constructor() {

@@ -9,5 +9,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "ipfs-http-client": "^60.0.1",
+    "web3.storage": "^4.5.5"
+  }
 }
