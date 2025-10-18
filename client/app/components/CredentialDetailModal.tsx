@@ -1,25 +1,93 @@
-'use client'
-import { useState } from "react";
+'use client';
 
-export default function CredentialDetailModal({ entry, onClose, onSave }) {
-  // Use the ID in the state to ensure we render based on the current entry template
-  const [formData, setFormData] = useState(entry);
+import React, { useState, ChangeEvent, FormEvent } from 'react';
+import { Eye, EyeOff, Copy, List, Tag } from 'lucide-react';
+import type { VaultEntry } from './VaultScreen'; // import the interface we made earlier
+
+// 🧩 Types for the schema used to render fields
+interface CredentialField {
+  key: string;
+  label: string;
+  type: 'text' | 'password' | 'textarea';
+  optional?: boolean;
+  icon?: React.ElementType;
+  mask?: boolean;
+}
+
+interface CredentialSchema {
+  fields: CredentialField[];
+}
+
+//  Props for the Modal
+interface CredentialDetailModalProps {
+  entry: VaultEntry;
+  onClose: () => void;
+  onSave: (entry: VaultEntry) => void;
+}
+
+//  Placeholder variables/functions that should exist in utils or constants
+// TODO: Import these from ../lib/utils if available
+const credentialSchemas: Record<string, CredentialSchema> = {
+  Login: {
+    fields: [
+      { key: 'username', label: 'Username', type: 'text' },
+      { key: 'password', label: 'Password', type: 'password' },
+    ],
+  },
+  Note: {
+    fields: [
+      { key: 'content', label: 'Note Content', type: 'textarea', optional: true },
+    ],
+  },
+};
+
+const credentialTypes = Object.keys(credentialSchemas);
+
+const getTypeIcon = (type: string): React.ElementType => {
+  switch (type) {
+    case 'Login':
+      return Tag;
+    case 'Note':
+      return List;
+    default:
+      return Tag;
+  }
+};
+
+const getNewCredentialTemplate = (type: string): VaultEntry => ({
+  id: Date.now().toString(),
+  name: `New ${type}`,
+  type,
+});
+
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    console.error('Failed to copy text');
+  }
+};
+
+const CredentialDetailModal: React.FC<CredentialDetailModalProps> = ({
+  entry,
+  onClose,
+  onSave,
+}) => {
+  const [formData, setFormData] = useState<VaultEntry>(entry);
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const currentSchema = credentialSchemas[formData.type];
   const Icon = getTypeIcon(formData.type);
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
-  
-  // Handle type change: reset form data to the new type's template
-  const handleTypeChange = (e) => {
+
+  const handleTypeChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const newType = e.target.value;
     const newTemplate = getNewCredentialTemplate(newType);
-    
-    // Preserve Name if it wasn't the default 'New [Type]'
+
     if (!formData.name.startsWith('New')) {
       newTemplate.name = formData.name;
     }
@@ -27,32 +95,36 @@ export default function CredentialDetailModal({ entry, onClose, onSave }) {
     setFormData(newTemplate);
   };
 
-  const handleSave = (e) => {
+  const handleSave = (e: FormEvent) => {
     e.preventDefault();
     onSave(formData);
     onClose();
   };
-  
-  const renderDynamicFields = () => {
-    if (!currentSchema) return <p className="text-red-400">Invalid credential type selected.</p>;
 
-    return currentSchema.fields.map(field => {
+  const renderDynamicFields = () => {
+    if (!currentSchema)
+      return <p className="text-red-400">Invalid credential type selected.</p>;
+
+    return currentSchema.fields.map((field) => {
       const isPassword = field.type === 'password';
       const isTextArea = field.type === 'textarea';
-      
       const InputIcon = field.icon || Tag;
 
       return (
         <div key={field.key}>
           <label className="block text-sm font-medium text-gray-400 mb-1 flex items-center">
             {field.icon ? <InputIcon size={16} className="mr-2" /> : null}
-            {field.label} {field.optional && <span className="text-gray-500 ml-1">(Optional)</span>}
+            {field.label}{' '}
+            {field.optional && (
+              <span className="text-gray-500 ml-1">(Optional)</span>
+            )}
           </label>
+
           <div className="relative">
             {isTextArea ? (
               <textarea
                 name={field.key}
-                value={formData[field.key] || ''}
+                value={(formData as any)[field.key] || ''}
                 onChange={handleChange}
                 required={!field.optional}
                 rows={4}
@@ -62,14 +134,13 @@ export default function CredentialDetailModal({ entry, onClose, onSave }) {
               <input
                 type={isPassword && !showPassword ? 'password' : 'text'}
                 name={field.key}
-                value={formData[field.key] || ''}
+                value={(formData as any)[field.key] || ''}
                 onChange={handleChange}
                 required={!field.optional}
-                className={`w-full py-2 px-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-purple-500 focus:border-purple-500`}
+                className="w-full py-2 px-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-purple-500 focus:border-purple-500"
               />
             )}
-            
-            {/* Show/Hide button for passwords/masked fields */}
+
             {(isPassword || field.mask) && (
               <button
                 type="button"
@@ -81,16 +152,18 @@ export default function CredentialDetailModal({ entry, onClose, onSave }) {
               </button>
             )}
 
-            {/* Copy button */}
-            {formData[field.key] && (
-               <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); copyToClipboard(formData[field.key]); }}
-                  className="absolute right-10 top-1/2 transform -translate-y-1/2 text-purple-400 hover:text-purple-300 hidden md:block" // Hidden on small screens to avoid crowding
-                  title="Copy"
-                >
-                  <Copy size={16} />
-                </button>
+            {formData[field.key as keyof VaultEntry] && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyToClipboard((formData as any)[field.key]);
+                }}
+                className="absolute right-10 top-1/2 transform -translate-y-1/2 text-purple-400 hover:text-purple-300 hidden md:block"
+                title="Copy"
+              >
+                <Copy size={16} />
+              </button>
             )}
           </div>
         </div>
@@ -106,8 +179,6 @@ export default function CredentialDetailModal({ entry, onClose, onSave }) {
           Edit Credential: {entry.name}
         </h2>
         <form onSubmit={handleSave} className="space-y-4">
-          
-          {/* Credential Type Select (Drives the form structure) */}
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1 flex items-center">
               <List size={16} className="mr-2" />Credential Type
@@ -115,16 +186,17 @@ export default function CredentialDetailModal({ entry, onClose, onSave }) {
             <select
               name="type"
               value={formData.type}
-              onChange={handleTypeChange} // Use the specific handler for type change
+              onChange={handleTypeChange}
               className="w-full py-2 px-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-purple-500 focus:border-purple-500"
             >
-              {credentialTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
+              {credentialTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
               ))}
             </select>
           </div>
-          
-          {/* Name Field (Always present) */}
+
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">Name</label>
             <input
@@ -137,10 +209,8 @@ export default function CredentialDetailModal({ entry, onClose, onSave }) {
             />
           </div>
 
-          {/* Dynamic Fields */}
           {renderDynamicFields()}
 
-          {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
@@ -158,20 +228,24 @@ export default function CredentialDetailModal({ entry, onClose, onSave }) {
           </div>
         </form>
       </div>
+
       <style jsx>{`
         @keyframes slideInUp {
-          from { transform: translateY(50px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
+          from {
+            transform: translateY(50px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
         }
         .animate-slide-in-up {
           animation: slideInUp 0.3s ease-out forwards;
-        }
-        /* Style for blurring sensitive content */
-        .blur-sm {
-            filter: blur(4px);
-            user-select: none;
         }
       `}</style>
     </div>
   );
 };
+
+export default CredentialDetailModal;

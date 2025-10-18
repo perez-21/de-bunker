@@ -1,23 +1,43 @@
 'use client'
-import {
-  Search, Plus, LogOut, LayoutGrid
-} from 'lucide-react';
 import { useState } from 'react';
-import { CredentialDetailModal } from '@/app/components';
-import { VaultEntryCard } from '@/app/components';
+import { Search, Plus, LogOut, LayoutGrid } from 'lucide-react';
+import { CredentialDetailModal, VaultEntryCard } from '@/app/components';
 
+// Type Definitions
+export interface VaultEntry {
+  id: string;
+  name: string;
+  type: string;
+  [key: string]: any;
+}
 
-export default function VaultScreen({ entries, onLogout, onUpdateEntry }) {
+interface VaultScreenProps {
+  entries: VaultEntry[];
+  onLogout: () => void;
+  onUpdateEntry: (updatedEntry: VaultEntry) => void;
+}
+
+// NOTE: If not defined in app/lib, import or define here temporarily:
+function getNewCredentialTemplate(type: string): VaultEntry {
+  // TODO: Replace with actual util import from app/lib when available
+  return {
+    id: Date.now().toString(),
+    name: `New ${type}`,
+    type,
+  };
+}
+
+export default function VaultScreen({ entries, onLogout, onUpdateEntry }: VaultScreenProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [selectedEntry, setSelectedEntry] = useState<VaultEntry | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const filteredEntries = entries.filter(entry =>
+  const filteredEntries = entries.filter((entry) =>
     entry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     entry.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleOpenModal = (entry) => {
+  const handleOpenModal = (entry: VaultEntry) => {
     setSelectedEntry(entry);
     setIsModalOpen(true);
   };
@@ -27,11 +47,11 @@ export default function VaultScreen({ entries, onLogout, onUpdateEntry }) {
     setSelectedEntry(null);
   };
 
-  // Function to handle saving details (passed to modal)
-  const handleSaveDetails = (updatedEntry) => {
+  const handleSaveDetails = (updatedEntry: VaultEntry) => {
     onUpdateEntry(updatedEntry);
   };
 
+ 
   return (
     <div className="flex flex-col h-full p-4 md:p-8">
       {/* Vault Header & Controls */}
@@ -104,3 +124,5 @@ export default function VaultScreen({ entries, onLogout, onUpdateEntry }) {
     </div>
   );
 };
+
+

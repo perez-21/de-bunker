@@ -1,6 +1,9 @@
+'use client';
+
 import { useState, useEffect } from "react";
 import Web3 from "web3";
 import { Wallet, LogOut, Copy, AlertCircle, Check, RefreshCw } from "lucide-react";
+
 
 /**
  * ConnectWalletButton Component
@@ -17,30 +20,50 @@ import { Wallet, LogOut, Copy, AlertCircle, Check, RefreshCw } from "lucide-reac
  * @param {Function} onConnected - Callback that receives (web3, account) when connected
  * @returns {JSX.Element} - The wallet connection UI
  */
-export default function ConnectWalletButton({ onConnected }) {
-  const [account, setAccount] = useState(null);
-  const [web3, setWeb3] = useState(null);
-  const [notification, setNotification] = useState(null);
+
+//  Types
+interface NetworkStatus {
+  connected: boolean;
+  isCorrectNetwork: boolean;
+  chainId: number | null;
+}
+
+interface Notification {
+  message: string;
+  type: "info" | "error" | "success" | "warning";
+}
+
+interface ConnectWalletButtonProps {
+  onConnected: (web3: Web3 | null, account: string | null) => void;
+}
+
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
+export default function ConnectWalletButton({ onConnected }: ConnectWalletButtonProps) {
+  const [account, setAccount] = useState<string | null>(null);
+  const [web3, setWeb3] = useState<Web3 | null>(null);
+  const [notification, setNotification] = useState<Notification | null>(null);
   const [connecting, setConnecting] = useState(false);
-  const [networkStatus, setNetworkStatus] = useState({
+  const [networkStatus, setNetworkStatus] = useState<NetworkStatus>({
     connected: false,
     isCorrectNetwork: false,
-    chainId: null
+    chainId: null,
   });
 
-  const requiredNetworkId = import.meta.env.VITE_NETWORK_ID || null;
-  const rpcUrl = import.meta.env.VITE_RPC_URL || "https://rpc.blockdag.network";
+  const requiredNetworkId = import.meta.env.NEXT_NETWORK_ID || null;
+  const rpcUrl = import.meta.env.NEXT_RPC_URL || "https://rpc.blockdag.network";
 
-  // Check for existing connection on component mount
+  // 🔍 Check for existing connection on mount
   useEffect(() => {
     const checkConnection = async () => {
       if (!window.ethereum || account) return;
 
       try {
-        // Check if already connected
-        const accounts = await window.ethereum.request({
-          method: 'eth_accounts'
-        });
+        const accounts = await window.ethereum.request({ method: "eth_accounts" });
 
         if (accounts.length > 0) {
           const web3Instance = new Web3(window.ethereum);
@@ -48,7 +71,6 @@ export default function ConnectWalletButton({ onConnected }) {
           setAccount(accounts[0]);
           onConnected(web3Instance, accounts[0]);
 
-          // Check network
           await checkAndUpdateNetworkStatus(web3Instance);
         }
       } catch (err) {
@@ -59,16 +81,14 @@ export default function ConnectWalletButton({ onConnected }) {
     checkConnection();
   }, []);
 
-  // Set up event listeners for account/chain changes
+  //  Listen for account/network changes
   useEffect(() => {
     if (!window.ethereum) return;
 
-    const handleAccountsChanged = async (accounts) => {
+    const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts.length === 0) {
-        // User disconnected their wallet
         disconnectWallet();
       } else if (accounts[0] !== account) {
-        // User switched accounts
         setAccount(accounts[0]);
         if (web3) {
           onConnected(web3, accounts[0]);
@@ -77,38 +97,31 @@ export default function ConnectWalletButton({ onConnected }) {
       }
     };
 
-    const handleChainChanged = async (chainIdHex) => {
-      // Update network status when chain changes
+    const handleChainChanged = async () => {
       if (web3) {
         await checkAndUpdateNetworkStatus(web3);
-
-        // Also reload the page for a clean state
         window.location.reload();
       }
     };
 
-    window.ethereum.on('accountsChanged', handleAccountsChanged);
-    window.ethereum.on('chainChanged', handleChainChanged);
+    window.ethereum.on("accountsChanged", handleAccountsChanged);
+    window.ethereum.on("chainChanged", handleChainChanged);
 
-    // Clean up listeners when component unmounts
     return () => {
-      if (window.ethereum.removeListener) {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum.removeListener('chainChanged', handleChainChanged);
+      if (window.ethereum?.removeListener) {
+        window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+        window.ethereum.removeListener("chainChanged", handleChainChanged);
       }
     };
   }, [account, web3, onConnected]);
 
-  const checkAndUpdateNetworkStatus = async (web3Instance) => {
+  // 🧠 Network check logic
+  const checkAndUpdateNetworkStatus = async (web3Instance: Web3) => {
     try {
       const chainId = await web3Instance.eth.getChainId();
       const isCorrectNetwork = !requiredNetworkId || parseInt(requiredNetworkId) === chainId;
 
-      setNetworkStatus({
-        connected: true,
-        isCorrectNetwork,
-        chainId
-      });
+      setNetworkStatus({ connected: true, isCorrectNetwork, chainId });
 
       if (!isCorrectNetwork) {
         showNotification("Please switch to the BlockDAG network", "warning");
@@ -117,38 +130,36 @@ export default function ConnectWalletButton({ onConnected }) {
       return isCorrectNetwork;
     } catch (err) {
       console.error("Error checking network:", err);
-      setNetworkStatus({
-        connected: false,
-        isCorrectNetwork: false,
-        chainId: null
-      });
+      setNetworkStatus({ connected: false, isCorrectNetwork: false, chainId: null });
       return false;
     }
   };
 
+  //  Add BlockDAG network to MetaMask
   const addBlockDAGNetwork = async () => {
     if (!window.ethereum) return;
 
     try {
       await window.ethereum.request({
-        method: 'wallet_addEthereumChain',
-        params: [{
-          chainId: requiredNetworkId ? Web3.utils.toHex(parseInt(requiredNetworkId)) : "0x1",
-          chainName: 'BlockDAG Network',
-          nativeCurrency: {
-            name: 'DAG',
-            symbol: 'DAG',
-            decimals: 18
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: requiredNetworkId
+              ? Web3.utils.toHex(parseInt(requiredNetworkId))
+              : "0x1",
+            chainName: "BlockDAG Network",
+            nativeCurrency: {
+              name: "DAG",
+              symbol: "DAG",
+              decimals: 18,
+            },
+            rpcUrls: [rpcUrl],
+            blockExplorerUrls: ["https://explorer.blockdag.network"],
           },
-          rpcUrls: [rpcUrl],
-          blockExplorerUrls: ['https://explorer.blockdag.network']
-        }]
+        ],
       });
 
-      // After adding the network, check if we're connected to it
-      if (web3) {
-        await checkAndUpdateNetworkStatus(web3);
-      }
+      if (web3) await checkAndUpdateNetworkStatus(web3);
 
       showNotification("BlockDAG Network added successfully", "success");
     } catch (err) {
@@ -157,6 +168,7 @@ export default function ConnectWalletButton({ onConnected }) {
     }
   };
 
+  //  Connect to wallet
   const connectWallet = async () => {
     if (!window.ethereum) {
       showNotification("Please install MetaMask to use this dApp", "error");
@@ -173,13 +185,12 @@ export default function ConnectWalletButton({ onConnected }) {
       setAccount(accounts[0]);
       onConnected(web3Instance, accounts[0]);
 
-      // Check and setup network
       const isCorrectNetwork = await checkAndUpdateNetworkStatus(web3Instance);
 
       if (!isCorrectNetwork) {
-        showNotification("Consider switching to BlockDAG network for full functionality", "warning");
+        showNotification("Switch to BlockDAG network for full functionality", "warning");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Wallet connection failed:", err);
       if (err.code === 4001) {
         showNotification("Connection rejected by user", "error");
@@ -191,18 +202,16 @@ export default function ConnectWalletButton({ onConnected }) {
     }
   };
 
+  //  Disconnect wallet
   const disconnectWallet = () => {
     setAccount(null);
     setWeb3(null);
-    setNetworkStatus({
-      connected: false,
-      isCorrectNetwork: false,
-      chainId: null
-    });
+    setNetworkStatus({ connected: false, isCorrectNetwork: false, chainId: null });
     onConnected(null, null);
     showNotification("Wallet disconnected", "success");
   };
 
+  //  Copy address
   const copyAddress = () => {
     if (account) {
       navigator.clipboard.writeText(account);
@@ -210,7 +219,8 @@ export default function ConnectWalletButton({ onConnected }) {
     }
   };
 
-  const showNotification = (message, type = "info") => {
+  //  Notification
+  const showNotification = (message: string, type: Notification["type"] = "info") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
@@ -219,24 +229,30 @@ export default function ConnectWalletButton({ onConnected }) {
     <div className="relative">
       {/* Notification display */}
       {notification && (
-        <div className={`absolute -top-12 left-1/2 transform -translate-x-1/2 py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 ${notification.type === 'error' ? 'bg-red-500 text-white' :
-            notification.type === 'success' ? 'bg-green-500 text-white' :
-              'bg-yellow-500 text-white'
-          }`}>
-          {notification.type === 'error' && <AlertCircle size={16} />}
-          {notification.type === 'success' && <Check size={16} />}
-          {notification.type === 'warning' && <AlertCircle size={16} />}
+        <div
+          className={`absolute -top-12 left-1/2 transform -translate-x-1/2 py-2 px-4 rounded-lg text-sm font-medium flex items-center gap-2 ${
+            notification.type === "error"
+              ? "bg-red-500 text-white"
+              : notification.type === "success"
+              ? "bg-green-500 text-white"
+              : "bg-yellow-500 text-white"
+          }`}
+        >
+          {notification.type === "error" && <AlertCircle size={16} />}
+          {notification.type === "success" && <Check size={16} />}
+          {notification.type === "warning" && <AlertCircle size={16} />}
           {notification.message}
         </div>
       )}
 
-      {/* Button display based on connection state */}
+      {/* Main UI */}
       {!account ? (
         <button
           onClick={connectWallet}
           disabled={connecting}
-          className={`flex items-center gap-2 bg-dapp-primary text-white px-5 py-2 rounded-xl shadow-md hover:bg-dapp-secondary transition ${connecting ? 'opacity-70 cursor-wait' : ''
-            }`}
+          className={`flex items-center gap-2 bg-dapp-primary text-white px-5 py-2 rounded-xl shadow-md hover:bg-dapp-secondary transition ${
+            connecting ? "opacity-70 cursor-wait" : ""
+          }`}
         >
           <Wallet size={18} />
           {connecting ? "Connecting..." : "Connect Wallet"}
@@ -245,14 +261,15 @@ export default function ConnectWalletButton({ onConnected }) {
         <div className="flex flex-col items-center gap-2">
           <div className="flex items-center gap-2 bg-dapp-primary text-white px-5 py-2 rounded-xl shadow-md">
             <Wallet size={18} />
-            <span className="font-medium">{account.slice(0, 6) + "..." + account.slice(-4)}</span>
+            <span className="font-medium">
+              {account.slice(0, 6)}...{account.slice(-4)}
+            </span>
 
             <div className="ml-3 flex gap-2">
               <button
                 onClick={copyAddress}
                 className="p-1 hover:bg-white/20 rounded transition"
                 title="Copy Address"
-                aria-label="Copy wallet address"
               >
                 <Copy size={16} />
               </button>
@@ -260,14 +277,12 @@ export default function ConnectWalletButton({ onConnected }) {
                 onClick={disconnectWallet}
                 className="p-1 hover:bg-white/20 rounded transition"
                 title="Disconnect"
-                aria-label="Disconnect wallet"
               >
                 <LogOut size={16} />
               </button>
             </div>
           </div>
 
-          {/* Network status indicator */}
           {networkStatus.connected && !networkStatus.isCorrectNetwork && (
             <button
               onClick={addBlockDAGNetwork}

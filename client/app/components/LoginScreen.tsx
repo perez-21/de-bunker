@@ -1,11 +1,13 @@
-'use client'
-import {
-  Lock
-} from 'lucide-react';
+'use client';
 
+import { Lock } from 'lucide-react';
 import { useState } from 'react';
 
-export default function LoginScreen({ onLogin }) {
+interface LoginScreenProps {
+  onLogin: (password: string) => void;
+}
+
+export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [masterPassword, setMasterPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -24,11 +26,16 @@ export default function LoginScreen({ onLogin }) {
         <div className="text-center mb-8">
           <Lock size={48} className="text-purple-500 mx-auto mb-3" />
           <h1 className="text-3xl font-extrabold text-gray-100">Welcome Back</h1>
-          <p className="text-gray-400 mt-2">Enter your Master Password to unlock your vault.</p>
+          <p className="text-gray-400 mt-2">
+            Enter your Master Password to unlock your vault.
+          </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+            <Lock
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+              size={18}
+            />
             <input
               type="password"
               placeholder="Master Password"
@@ -46,9 +53,15 @@ export default function LoginScreen({ onLogin }) {
           </button>
         </form>
         <p className="text-center text-sm text-gray-500 mt-6">
-          Need an account? <span className="text-purple-400 cursor-pointer hover:underline" onClick={() => console.log('Navigate to Signup')}>Sign Up</span>
+          Need an account?{' '}
+          <span
+            className="text-purple-400 cursor-pointer hover:underline"
+            onClick={() => console.log('Navigate to Signup')}
+          >
+            Sign Up
+          </span>
         </p>
       </div>
     </div>
   );
-};
+}

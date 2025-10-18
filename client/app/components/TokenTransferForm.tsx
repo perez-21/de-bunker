@@ -1,81 +1,103 @@
+'use client';
+
 import { useState } from 'react';
 import { Send, AlertCircle, Check } from 'lucide-react';
 
+
 /**
- * TokenTransferForm Component
- * 
- * This component provides a form to transfer tokens to another address:
- * - Input validation for recipient address
- * - Amount validation 
- * - Error handling and transaction status
- * - Success feedback
- * 
- * @param {Object} contractHelpers - Contract helper functions from useContract hook
- * @param {string} account - Current user's account address
- * @param {Function} onSuccess - Callback after successful transfer
- * @returns {JSX.Element} - The token transfer form UI
- */
-export default function TokenTransferForm({ contractHelpers, account, onSuccess }) {
-    const [recipient, setRecipient] = useState('');
-    const [amount, setAmount] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(false);
-    const [txHash, setTxHash] = useState(null);
+  * TokenTransferForm Component
+  * 
+  * This component provides a form to transfer tokens to another address:
+  * - Input validation for recipient address
+  * - Amount validation 
+  * - Error handling and transaction status
+  * - Success feedback
+  * 
+  * @param {Object} contractHelpers - Contract helper functions from useContract hook
+  * @param {string} account - Current user's account address
+  * @param {Function} onSuccess - Callback after successful transfer
+  * @returns {JSX.Element} - The token transfer form UI
+*/
 
-    const resetForm = () => {
-        setRecipient('');
-        setAmount('');
-        setError(null);
-        setSuccess(false);
-        setTxHash(null);
-    };
+// Define the shape of contract helper functions
+interface ContractHelpers {
+  isValidAddress: (address: string) => boolean;
+  transfer: (
+    recipient: string,
+    amount: string,
+    account: string
+  ) => Promise<{ transactionHash: string }>;
+}
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(null);
-        setSuccess(false);
-        setTxHash(null);
+interface TokenTransferFormProps {
+  contractHelpers: ContractHelpers;
+  account: string;
+  onSuccess?: () => void;
+}
 
-        // Validation
-        if (!recipient || !amount) {
-            setError('Please fill in all fields');
-            return;
-        }
+export default function TokenTransferForm({
+  contractHelpers,
+  account,
+  onSuccess,
+}: TokenTransferFormProps) {
+  const [recipient, setRecipient] = useState<string>('');
+  const [amount, setAmount] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<boolean>(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
 
-        if (!contractHelpers.isValidAddress(recipient)) {
-            setError('Invalid recipient address');
-            return;
-        }
+  const resetForm = () => {
+    setRecipient('');
+    setAmount('');
+    setError(null);
+    setSuccess(false);
+    setTxHash(null);
+  };
 
-        if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-            setError('Please enter a valid amount');
-            return;
-        }
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
+    setTxHash(null);
 
-        setLoading(true);
-        try {
-            const tx = await contractHelpers.transfer(recipient, amount, account);
-            setSuccess(true);
-            setTxHash(tx.transactionHash);
+    // Validation
+    if (!recipient || !amount) {
+      setError('Please fill in all fields');
+      return;
+    }
 
-            // Call the onSuccess callback if provided
-            if (typeof onSuccess === 'function') {
-                onSuccess();
-            }
-        } catch (err) {
-            console.error('Transfer failed:', err);
-            if (err.code === 4001) {
-                setError('Transaction rejected by user');
-            } else if (err.message.includes('insufficient funds')) {
-                setError('Insufficient funds for this transfer');
-            } else {
-                setError('Transfer failed. Please try again.');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
+    if (!contractHelpers.isValidAddress(recipient)) {
+      setError('Invalid recipient address');
+      return;
+    }
+
+    if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+      setError('Please enter a valid amount');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const tx = await contractHelpers.transfer(recipient, amount, account);
+      setSuccess(true);
+      setTxHash(tx.transactionHash);
+
+      // Trigger callback if provided
+      onSuccess?.();
+    } catch (err: any) {
+      console.error('Transfer failed:', err);
+      if (err.code === 4001) {
+        setError('Transaction rejected by user');
+      } else if (err.message?.includes('insufficient funds')) {
+        setError('Insufficient funds for this transfer');
+      } else {
+        setError('Transfer failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
     return (
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5 w-full max-w-md">
