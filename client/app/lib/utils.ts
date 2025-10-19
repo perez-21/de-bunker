@@ -27,3 +27,20 @@ export const copyToClipboard = (text: string) => {
     console.error("Clipboard copy failed: execCommand not available.");
   }
 };
+
+export async function generateKeyPair() {
+    // key pair generation
+
+    const keyPair = await crypto.subtle.generateKey(
+      {
+        name: "RSA-OAEP",
+        modulusLength: 2048,
+        publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+        hash: "SHA-256",
+      },
+      true, // extractable
+      ["encrypt", "decrypt"]
+    );
+
+    return {publicKey: keyPair.publicKey, privateKey: keyPair.privateKey};
+}
