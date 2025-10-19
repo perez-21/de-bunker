@@ -51,7 +51,7 @@ const vaultCategories = [
 const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isDarkMode, setIsDarkMode] = useState(true)
+  // const [isDarkMode, setIsDarkMode] = useState(true)
   const [showVaultCategories, setShowVaultCategories] = useState(false)
 
   const handleLogout = () => {
@@ -59,11 +59,11 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
     console.log("Logging out...")
   }
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode)
-    // Add your dark mode toggle logic here
-    document.documentElement.classList.toggle('dark')
-  }
+  // const toggleDarkMode = () => {
+  //   setIsDarkMode(!isDarkMode)
+  //   // Add your dark mode toggle logic here
+  //   document.documentElement.classList.toggle('dark')
+  // }
 
   const sidebarWidth = isCollapsed ? "w-20" : "w-64"
 
@@ -224,7 +224,7 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
             </ul>
 
             {/* Dark Mode Toggle */}
-            <div className="mt-4 pt-4 border-t border-gray-700/50">
+           {/* <div className="mt-4 pt-4 border-t border-gray-700/50">
               <button
                 onClick={toggleDarkMode}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-gray-400 hover:text-white hover:bg-gray-800/80 w-full group ${
@@ -243,7 +243,7 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
                   </span>
                 )}
               </button>
-            </div>
+            </div>*/}
           </nav>
 
           {/* Footer */}
