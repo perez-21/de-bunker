@@ -13,6 +13,7 @@ const connectDB = require('./config/database');
 // const walletRoutes = require('./routes/wallet');
 const ipfsRoutes = require('./routes/ipfs');
 const userRoutes = require('./routes/users');
+const credentialRoutes = require('./routes/credentials');
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use(limiter);
 
 app.use('/api/v1/ipfs', ipfsRoutes) // dummy ipfs
 app.use('/api/v1/users', userRoutes)
+app.use('/api/v1/credentials', credentialRoutes)
 
 // Health check
 app.get('/health', (req, res) => {

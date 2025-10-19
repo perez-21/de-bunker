@@ -3,7 +3,6 @@ import * as ethers from "ethers";
 import * as EthCrypto from "eth-crypto";
 
 export async function encryptSecretKey(
-  receiverAddress: string,
   secretKey: CryptoKey, recipientPublicKey: string
 ) {
 
