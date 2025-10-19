@@ -2,13 +2,15 @@
 
 import { motion } from 'framer-motion'
 import { useState } from 'react'
-import { Upload, Shield, Lock, Users, FileText, X, Clock, Eye } from 'lucide-react'
+import { Upload, Shield, Lock, Users, FileText, X, Clock, Eye, Wallet, Copy, Check } from 'lucide-react'
 
 export default function SendPage() {
   const [files, setFiles] = useState<File[]>([])
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
   const [encryptionLevel, setEncryptionLevel] = useState<'standard' | 'military'>('military')
   const [expiry, setExpiry] = useState('24h')
+  const [copied, setCopied] = useState(false)
+  const [walletAddress, setWalletAddress] = useState('')
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault()
@@ -23,6 +25,12 @@ export default function SendPage() {
 
   const removeFile = (index: number) => {
     setFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const copyWalletAddress = () => {
+    navigator.clipboard.writeText(walletAddress)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const contacts = [
@@ -110,6 +118,40 @@ export default function SendPage() {
                 ))}
               </div>
             )}
+          </motion.div>
+
+          {/* Wallet Address Component */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
+            className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 backdrop-blur-sm border border-blue-500/30 rounded-2xl p-6"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Wallet className="w-5 h-5 text-cyan-400" />
+              <h3 className="text-lg font-bold text-white">Receivers Wallet</h3>
+            </div>
+            <div className="flex items-center gap-3 bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+              <input
+                type="text"
+                value={walletAddress}
+                onChange={(e) => setWalletAddress(e.target.value)}
+                placeholder="Paste wallet address here..."
+                className="flex-1 bg-transparent border-none text-white font-mono text-sm placeholder-gray-500 focus:outline-none"
+              />
+              <button
+                onClick={copyWalletAddress}
+                disabled={!walletAddress}
+                className="flex-shrink-0 p-2 bg-cyan-500/20 hover:bg-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed border border-cyan-500/50 rounded-lg transition-all duration-300"
+                title="Copy address"
+              >
+                {copied ? (
+                  <Check className="w-5 h-5 text-green-400" />
+                ) : (
+                  <Copy className="w-5 h-5 text-cyan-400" />
+                )}
+              </button>
+            </div>
           </motion.div>
 
           {/* Recipients */}
