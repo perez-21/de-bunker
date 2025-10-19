@@ -11,10 +11,6 @@ import {
   Settings,
   Users,
   BarChart3,
-  Cpu,
-  Lock,
-  Moon,
-  Sun,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -22,7 +18,9 @@ import {
   CreditCard,
   StickyNote,
   Wallet,
+  Lock, // ✅ added
 } from "lucide-react"
+
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 
@@ -51,7 +49,6 @@ const vaultCategories = [
 const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
-  // const [isDarkMode, setIsDarkMode] = useState(true)
   const [showVaultCategories, setShowVaultCategories] = useState(false)
 
   const handleLogout = () => {
@@ -59,11 +56,9 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
     console.log("Logging out...")
   }
 
-  // const toggleDarkMode = () => {
-  //   setIsDarkMode(!isDarkMode)
-  //   // Add your dark mode toggle logic here
-  //   document.documentElement.classList.toggle('dark')
-  // }
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed)
+  }
 
   const sidebarWidth = isCollapsed ? "w-20" : "w-64"
 
@@ -104,26 +99,32 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-700/50">
-            {!isCollapsed && (
+            <div className="flex items-center gap-3 flex-1">
+              {/* Logo and Company Name */}
               <Link href="/dashboard" className="flex items-center gap-3 flex-1">
                 <div className="relative">
                   <div className="absolute inset-0 bg-blue-500 rounded-xl blur-md opacity-50" />
-                  <Cpu className="relative w-8 h-8 text-white" />
+                  <img 
+                    src="/logo.png" 
+                    alt="GWAG Logo" 
+                    className="relative w-8 h-8 rounded-lg object-contain"
+                  />
                 </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-                  DE-BUNKER
-                </span>
+                {!isCollapsed && (
+                  <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+                    De-bunker
+                  </span>
+                )}
               </Link>
-            )}
 
-            {isCollapsed && (
-              <Link href="/dashboard" className="flex justify-center flex-1">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-blue-500 rounded-xl blur-md opacity-50" />
-                  <Cpu className="relative w-8 h-8 text-white" />
-                </div>
-              </Link>
-            )}
+              {/* Collapse Button - Always visible on desktop */}
+              <button
+                onClick={toggleCollapse}
+                className="hidden lg:flex p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </button>
+            </div>
 
             {/* Close button (mobile only) */}
             <button
@@ -134,9 +135,9 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
             </button>
           </div>
 
-          {/* Collapse Toggle (desktop only) */}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+          {/* Collapse Toggle (desktop only) - Alternative position */}
+          {/*<button
+            onClick={toggleCollapse}
             className="hidden lg:flex items-center justify-center p-2 mx-3 mt-3 mb-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-all duration-200 border border-gray-700/50 hover:border-gray-600/50"
           >
             {isCollapsed ? (
@@ -144,7 +145,7 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
             ) : (
               <ChevronLeft className="w-4 h-4" />
             )}
-          </button>
+          </button>*/}
 
           {/* Navigation */}
           <nav className="flex-1 px-3 py-2 overflow-y-auto">
@@ -222,28 +223,6 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
                 )
               })}
             </ul>
-
-            {/* Dark Mode Toggle */}
-           {/* <div className="mt-4 pt-4 border-t border-gray-700/50">
-              <button
-                onClick={toggleDarkMode}
-                className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-gray-400 hover:text-white hover:bg-gray-800/80 w-full group ${
-                  isCollapsed ? 'justify-center' : ''
-                }`}
-                title={isCollapsed ? (isDarkMode ? "Light Mode" : "Dark Mode") : undefined}
-              >
-                {isDarkMode ? (
-                  <Sun className="w-5 h-5 group-hover:text-yellow-300" />
-                ) : (
-                  <Moon className="w-5 h-5 group-hover:text-blue-300" />
-                )}
-                {!isCollapsed && (
-                  <span className="font-medium">
-                    {isDarkMode ? "Light Mode" : "Dark Mode"}
-                  </span>
-                )}
-              </button>
-            </div>*/}
           </nav>
 
           {/* Footer */}
