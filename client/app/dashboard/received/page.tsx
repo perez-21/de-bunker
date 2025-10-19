@@ -3,6 +3,9 @@
 import { motion } from 'framer-motion'
 import { Download, Eye, Shield, Clock, User, FileText, Search } from 'lucide-react'
 import { useState } from 'react'
+import { ethers } from 'ethers'
+import { fileExchangeContract } from '@/app/shared/contractInfo'
+import { useWeb3 } from '@/app/hooks/useWeb3'
 
 export default function ReceivedPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -40,6 +43,16 @@ export default function ReceivedPage() {
       encryption: 'military'
     }
   ]
+
+  const { provider } = useWeb3();
+
+  const contract = new ethers.Contract(fileExchangeContract.address, fileExchangeContract.ABI, );
+  const eventFilter = contract.filters.KeySent();
+
+  contract.on(eventFilter, (receiver, encryptedKey, event) => {
+    console.log('it happened!');
+    alert('it happened');
+  })
 
   const filteredFiles = receivedFiles.filter(file => {
     const matchesSearch = file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
