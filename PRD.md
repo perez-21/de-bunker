@@ -20,6 +20,7 @@ D-Bunker is a **decentralized credentials manager** that allows users to securel
 ## Functional Requirements
 
 -   User can connect Wallet (as their primary identity and authentication mechanism).
+-   User can send and received encrypted files 
 -   User can **store encrypted credentials** (**Ciphertext**) on **IPFS**.
 -   User can **share their credential** with other users by initiating a **Proxy Re-encryption** process, which writes a new encrypted key to the chain.
 -   User can **revoke** other users' access, which triggers a **full re-encryption** of the credential ciphertext, invalidating all prior re-encryption keys.

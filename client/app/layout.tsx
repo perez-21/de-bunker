@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={` antialiased`}>
+      <body className="antialiased">
         <div
           className="min-h-screen bg-gray-900 text-gray-100 font-sans"
           style={{ fontFamily: "Inter, sans-serif" }}
