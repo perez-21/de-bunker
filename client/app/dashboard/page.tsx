@@ -12,6 +12,9 @@ import {
   ArrowUpRight,
   Eye,
   Zap,
+  Key,
+  CreditCard,
+  StickyNote,
   Network
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -41,80 +44,134 @@ export default function DashboardPage() {
     fetchWalletData()
   }, [])
 
-  const stats = [
-    {
-      icon: Wallet,
-      label: 'Total Balance',
-      value: walletBalance,
-      change: '+12%',
-      trend: 'up' as const,
-      color: 'from-blue-500 to-cyan-500',
-      description: usdValue,
-      isInteractive: true,
-      onClick: () => router.push('/dashboard/wallet'),
-      additionalInfo: 'Multi-chain'
-    },
-    {
-      icon: TrendingUp,
-      label: '24h Volume',
-      value: '$12.4K',
-      change: '+8%',
-      trend: 'up' as const,
-      color: 'from-green-500 to-emerald-500',
-      description: 'Across all networks',
-      isInteractive: true,
-      onClick: () => router.push('/dashboard/analytics'),
-      additionalInfo: 'All chains'
-    },
-    {
-      icon: Download,
-      label: 'Received (30d)',
-      value: '15 TX',
-      change: '+15%',
-      trend: 'up' as const,
-      color: 'from-purple-500 to-pink-500',
-      description: '0.85 ETH total',
-      isInteractive: true,
-      onClick: () => router.push('/dashboard/received'),
-      additionalInfo: '↗ 0.85 ETH'
-    },
-    {
-      icon: Upload,
-      label: 'Sent (30d)',
-      value: '8 TX',
-      change: '+5%',
-      trend: 'up' as const,
-      color: 'from-orange-500 to-red-500',
-      description: '0.42 ETH total',
-      isInteractive: true,
-      onClick: () => router.push('/dashboard/send'),
-      additionalInfo: '↘ 0.42 ETH'
-    },
-    {
-      icon: Shield,
-      label: 'Security Score',
-      value: '98%',
-      change: '+2%',
-      trend: 'up' as const,
-      color: 'from-cyan-500 to-blue-500',
-      description: 'Wallet protection',
-      isInteractive: true,
-      onClick: () => router.push('/dashboard/security'),
-      additionalInfo: 'Optimal'
-    },
-    {
-      icon: Cpu,
-      label: 'Gas Saved',
-      value: '0.12 ETH',
-      change: '-15%',
-      trend: 'down' as const,
-      color: 'from-yellow-500 to-amber-500',
-      description: 'This month',
-      isInteractive: true,
-      onClick: () => router.push('/dashboard/analytics'),
-      additionalInfo: 'Cost efficient'
-    }
-  ]
+  // const stats = [
+  //   {
+  //     icon: Wallet,
+  //     label: 'Total Balance',
+  //     value: walletBalance,
+  //     change: '+12%',
+  //     trend: 'up' as const,
+  //     color: 'from-blue-500 to-cyan-500',
+  //     description: usdValue,
+  //     isInteractive: true,
+  //     onClick: () => router.push('/dashboard/wallet'),
+  //     additionalInfo: 'Multi-chain'
+  //   },
+  //   {
+  //     icon: TrendingUp,
+  //     label: '24h Volume',
+  //     value: '$12.4K',
+  //     change: '+8%',
+  //     trend: 'up' as const,
+  //     color: 'from-green-500 to-emerald-500',
+  //     description: 'Across all networks',
+  //     isInteractive: true,
+  //     onClick: () => router.push('/dashboard/analytics'),
+  //     additionalInfo: 'All chains'
+  //   },
+  //   {
+  //     icon: Download,
+  //     label: 'Received (30d)',
+  //     value: '15 TX',
+  //     change: '+15%',
+  //     trend: 'up' as const,
+  //     color: 'from-purple-500 to-pink-500',
+  //     description: '0.85 ETH total',
+  //     isInteractive: true,
+  //     onClick: () => router.push('/dashboard/received'),
+  //     additionalInfo: '↗ 0.85 ETH'
+  //   },
+  //   {
+  //     icon: Upload,
+  //     label: 'Sent (30d)',
+  //     value: '8 TX',
+  //     change: '+5%',
+  //     trend: 'up' as const,
+  //     color: 'from-orange-500 to-red-500',
+  //     description: '0.42 ETH total',
+  //     isInteractive: true,
+  //     onClick: () => router.push('/dashboard/send'),
+  //     additionalInfo: '↘ 0.42 ETH'
+  //   },
+  //   {
+  //     icon: Shield,
+  //     label: 'Security Score',
+  //     value: '98%',
+  //     change: '+2%',
+  //     trend: 'up' as const,
+  //     color: 'from-cyan-500 to-blue-500',
+  //     description: 'Wallet protection',
+  //     isInteractive: true,
+  //     onClick: () => router.push('/dashboard/security'),
+  //     additionalInfo: 'Optimal'
+  //   },
+  //   {
+  //     icon: Cpu,
+  //     label: 'Gas Saved',
+  //     value: '0.12 ETH',
+  //     change: '-15%',
+  //     trend: 'down' as const,
+  //     color: 'from-yellow-500 to-amber-500',
+  //     description: 'This month',
+  //     isInteractive: true,
+  //     onClick: () => router.push('/dashboard/analytics'),
+  //     additionalInfo: 'Cost efficient'
+  //   }
+  // ]
+// Example usage with security data
+const securityStats = [
+  {
+    icon: Key, // Login credentials
+    label: "Login Credentials",
+    value: "24 Secured",
+    status: "secure" as const,
+    trend: "improving" as const,
+    color: "from-blue-500 to-cyan-500",
+    description: "All passwords encrypted and secured",
+    securityLevel: "high" as const,
+    itemsCount: 24,
+    lastUpdated: "2 hours ago"
+  },
+  {
+    icon: CreditCard,
+    label: "Payment Cards",
+    value: "5 Protected",
+    status: "warning" as const,
+    trend: "deteriorating" as const,
+    color: "from-green-500 to-emerald-500",
+    description: "1 card needs re-encryption",
+    securityLevel: "medium" as const,
+    itemsCount: 5,
+    lastUpdated: "1 day ago"
+  },
+  {
+    icon: StickyNote,
+    label: "Secure Notes",
+    value: "12 Encrypted",
+    status: "encrypted" as const,
+    color: "from-yellow-500 to-amber-500",
+    description: "All notes are end-to-end encrypted",
+    securityLevel: "high" as const,
+    itemsCount: 12,
+    lastUpdated: "5 minutes ago"
+  },
+  {
+    icon: Wallet,
+    label: "Wallet Addresses",
+    value: "8 Secured",
+    status: "critical" as const,
+    color: "from-purple-500 to-pink-500",
+    description: "2 wallets need security review",
+    securityLevel: "low" as const,
+    itemsCount: 8,
+    lastUpdated: "just now"
+  }
+]
+
+
+
+
+
 
   const networkStats = [
     { label: 'Ethereum', value: '1.85 ETH', color: 'text-blue-400' },
@@ -162,17 +219,17 @@ export default function DashboardPage() {
         </motion.div>
       </motion.div>
 
-      {/* Stats Grid */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6"
-      >
-        {stats.map((stat, index) => (
-          <StatsCard key={stat.label} stat={stat} index={index} />
-        ))}
-      </motion.div>
+  {/* Stats Grid */}
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5, delay: 0.1 }}
+  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+>
+  {securityStats.map((stat, index) => (
+    <StatsCard key={index} stat={stat} index={index} />
+  ))}
+</motion.div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">

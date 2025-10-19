@@ -20,9 +20,16 @@ import {
   Archive,
   Filter,
   SortAsc,
-  CheckCircle
+  CheckCircle,
+  Check,
+  ExternalLink,
+  Shield,
+  Star,
+  StarOff
 } from 'lucide-react'
 import Link from 'next/link'
+import AuthorizationModal from '../../../components/modal/authorize'
+
 
 interface NoteItem {
   id: string
@@ -35,18 +42,299 @@ interface NoteItem {
   tags: string[]
   favorite: boolean
   wordCount: number
+  encryptionLevel: 'standard' | 'military'
+  sharedWith?: string[]
+}
+
+interface NoteDetailsModalProps {
+  isOpen: boolean
+  onClose: () => void
+  note: NoteItem | null
+  onAuthorize: (privateKey: string) => Promise<boolean>
+  onToggleFavorite: (noteId: string) => void
+}
+
+// Note Details Modal Component
+function NoteDetailsModal({ isOpen, onClose, note, onAuthorize, onToggleFavorite }: NoteDetailsModalProps) {
+  const [showContent, setShowContent] = useState(false)
+  const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+
+  if (!note) return null
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(field)
+      setTimeout(() => setCopiedField(null), 2000)
+    } catch (err) {
+      console.error('Failed to copy: ', err)
+    }
+  }
+
+  const handleViewContent = () => {
+    if (note.encrypted) {
+      setShowAuthModal(true)
+    } else {
+      setShowContent(true)
+    }
+  }
+
+  const handleAuthorize = async (privateKey: string): Promise<boolean> => {
+    const success = await onAuthorize(privateKey)
+    if (success) {
+      setShowContent(true)
+      setShowAuthModal(false)
+    }
+    return success
+  }
+
+  const exportNote = () => {
+    const content = `Title: ${note.title}\nCategory: ${note.category}\nCreated: ${note.createdAt}\nLast Edited: ${note.lastEdited}\nTags: ${note.tags.join(', ')}\nEncrypted: ${note.encrypted}\nEncryption Level: ${note.encryptionLevel}\n\n${note.content}`
+    
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${note.title.replace(/\s+/g, '_')}.txt`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            onClick={onClose}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-700/50 sticky top-0 bg-gray-900/95 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    note.favorite ? 'bg-yellow-500/20' : 'bg-gray-700/50'
+                  }`}>
+                    <StickyNote className={`w-6 h-6 ${note.favorite ? 'text-yellow-400' : 'text-gray-400'}`} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                      {note.title}
+                      <button
+                        onClick={() => onToggleFavorite(note.id)}
+                        className="p-1 hover:scale-110 transition-transform"
+                      >
+                        {note.favorite ? (
+                          <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                        ) : (
+                          <StarOff className="w-5 h-5 text-gray-400" />
+                        )}
+                      </button>
+                    </h2>
+                    <p className="text-gray-400 text-sm">{note.category}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={exportNote}
+                    className="p-2 text-gray-400 hover:text-green-400 transition-colors"
+                    title="Export Note"
+                  >
+                    <Download className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="p-2 text-gray-400 hover:text-white transition-colors"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-6">
+                {/* Security Status */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
+                    <Lock className={`w-5 h-5 ${note.encrypted ? 'text-green-400' : 'text-gray-400'}`} />
+                    <div>
+                      <p className="text-white text-sm font-medium">Encryption</p>
+                      <p className="text-gray-400 text-sm">
+                        {note.encrypted ? `${note.encryptionLevel === 'military' ? 'Military Grade' : 'Standard'} AES-256` : 'Not Encrypted'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
+                    <Shield className="w-5 h-5 text-blue-400" />
+                    <div>
+                      <p className="text-white text-sm font-medium">Security Level</p>
+                      <p className="text-gray-400 text-sm capitalize">
+                        {note.encryptionLevel}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Note Content */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white font-semibold">Note Content</h3>
+                    {!showContent && note.encrypted && (
+                      <button
+                        onClick={handleViewContent}
+                        className="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg transition-all duration-300"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Decrypt Content
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="bg-gray-800/50 rounded-lg p-4 min-h-[200px]">
+                    {showContent ? (
+                      <div>
+                        <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">
+                          {note.content}
+                        </p>
+                        <div className="flex justify-end mt-4 gap-2">
+                          <button
+                            onClick={() => copyToClipboard(note.content, 'content')}
+                            className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm transition-colors"
+                          >
+                            {copiedField === 'content' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            {copiedField === 'content' ? 'Copied!' : 'Copy Content'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        {note.encrypted ? (
+                          <div className="space-y-3">
+                            <Lock className="w-8 h-8 text-gray-500 mx-auto" />
+                            <p className="text-gray-400">Content is encrypted</p>
+                            <p className="text-amber-400 text-sm">
+                              Authorization required to decrypt and view content
+                            </p>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setShowContent(true)}
+                            className="text-cyan-400 hover:text-cyan-300 transition-colors"
+                          >
+                            Click to view content
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                <div className="space-y-4">
+                  <h3 className="text-white font-semibold">Note Information</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-400">Created</span>
+                      <p className="text-white">{new Date(note.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Last Updated</span>
+                      <p className="text-white">{new Date(note.lastEdited).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Category</span>
+                      <p className="text-white capitalize">{note.category}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Word Count</span>
+                      <p className="text-white">{note.wordCount} words</p>
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  <div>
+                    <label className="text-gray-400 text-sm mb-2 block">Tags</label>
+                    <div className="flex flex-wrap gap-2">
+                      {note.tags.map(tag => (
+                        <span
+                          key={tag}
+                          className="px-3 py-1 bg-blue-500/20 text-blue-400 text-sm rounded-full capitalize border border-blue-500/30"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Shared With */}
+                  {note.sharedWith && note.sharedWith.length > 0 && (
+                    <div>
+                      <label className="text-gray-400 text-sm mb-2 block">Shared With</label>
+                      <div className="flex flex-wrap gap-2">
+                        {note.sharedWith.map((person, index) => (
+                          <span
+                            key={index}
+                            className="px-3 py-1 bg-green-500/20 text-green-400 text-sm rounded-full border border-green-500/30"
+                          >
+                            {person}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex gap-3 p-6 border-t border-gray-700/50">
+                <button
+                  onClick={onClose}
+                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg font-semibold transition-colors"
+                >
+                  Close
+                </button>
+                <button className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-3 rounded-lg font-semibold transition-all duration-300">
+                  Edit Note
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Authorization Modal */}
+      <AuthorizationModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthorize={handleAuthorize}
+        actionDescription={`Decrypt secure note: "${note.title}"`}
+        requiredPermissions={["Decrypt encrypted content"]}
+      />
+    </>
+  )
 }
 
 export default function NotesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedNote, setSelectedNote] = useState<NoteItem | null>(null)
-  const [isDetailView, setIsDetailView] = useState(false)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [sortBy, setSortBy] = useState<'date' | 'title' | 'updated'>('updated')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showEncryptedContent, setShowEncryptedContent] = useState<{[key: string]: boolean}>({})
-
-  const notes: NoteItem[] = [
+  const [copiedItems, setCopiedItems] = useState<Set<string>>(new Set())
+  const [notes, setNotes] = useState<NoteItem[]>([
     {
       id: '1',
       title: 'Project Ideas & Roadmap',
@@ -57,7 +345,8 @@ export default function NotesPage() {
       encrypted: true,
       tags: ['ideas', 'blockchain', 'roadmap'],
       favorite: true,
-      wordCount: 45
+      wordCount: 45,
+      encryptionLevel: 'military'
     },
     {
       id: '2',
@@ -69,7 +358,8 @@ export default function NotesPage() {
       encrypted: true,
       tags: ['recovery', 'wallet', 'backup'],
       favorite: true,
-      wordCount: 28
+      wordCount: 28,
+      encryptionLevel: 'military'
     },
     {
       id: '3',
@@ -81,7 +371,8 @@ export default function NotesPage() {
       encrypted: false,
       tags: ['meeting', 'work', 'q1'],
       favorite: false,
-      wordCount: 52
+      wordCount: 52,
+      encryptionLevel: 'standard'
     },
     {
       id: '4',
@@ -93,7 +384,8 @@ export default function NotesPage() {
       encrypted: false,
       tags: ['goals', '2024', 'personal'],
       favorite: true,
-      wordCount: 38
+      wordCount: 38,
+      encryptionLevel: 'standard'
     },
     {
       id: '5',
@@ -105,7 +397,8 @@ export default function NotesPage() {
       encrypted: true,
       tags: ['research', 'crypto', 'investment'],
       favorite: false,
-      wordCount: 67
+      wordCount: 67,
+      encryptionLevel: 'military'
     },
     {
       id: '6',
@@ -117,12 +410,13 @@ export default function NotesPage() {
       encrypted: false,
       tags: ['contracts', 'addresses', 'development'],
       favorite: true,
-      wordCount: 41
+      wordCount: 41,
+      encryptionLevel: 'standard',
+      sharedWith: ['Sarah Wilson', 'Mike Johnson']
     }
-  ]
+  ])
 
   const categories = ['all', 'Development', 'Security', 'Work', 'Personal', 'Finance', 'Ideas']
-  const tags = ['all', 'ideas', 'blockchain', 'recovery', 'work', 'personal', 'crypto', 'development']
 
   const filteredNotes = notes
     .filter(note => 
@@ -152,24 +446,30 @@ export default function NotesPage() {
     }))
   }
 
-  const getDisplayContent = (note: NoteItem) => {
-    if (note.encrypted && !showEncryptedContent[note.id]) {
-      return '🔒 This content is encrypted. Click the eye icon to view.'
-    }
-    return note.content
+  const toggleFavorite = (noteId: string) => {
+    setNotes(prev => prev.map(note => 
+      note.id === noteId ? { ...note, favorite: !note.favorite } : note
+    ))
   }
 
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = async (text: string, field: string, noteId: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      // Show toast notification
+      setCopiedItems(prev => new Set(prev).add(`${noteId}-${field}`))
+      setTimeout(() => {
+        setCopiedItems(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(`${noteId}-${field}`)
+          return newSet
+        })
+      }, 2000)
     } catch (err) {
       console.error('Failed to copy: ', err)
     }
   }
 
   const exportNote = (note: NoteItem) => {
-    const content = `Title: ${note.title}\nCategory: ${note.category}\nCreated: ${note.createdAt}\nLast Edited: ${note.lastEdited}\nTags: ${note.tags.join(', ')}\n\n${note.content}`
+    const content = `Title: ${note.title}\nCategory: ${note.category}\nCreated: ${note.createdAt}\nLast Edited: ${note.lastEdited}\nTags: ${note.tags.join(', ')}\nEncrypted: ${note.encrypted}\nEncryption Level: ${note.encryptionLevel}\n\n${note.content}`
     
     const blob = new Blob([content], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
@@ -178,6 +478,34 @@ export default function NotesPage() {
     link.download = `${note.title.replace(/\s+/g, '_')}.txt`
     link.click()
     URL.revokeObjectURL(url)
+  }
+
+  const handleViewDetails = (note: NoteItem) => {
+    setSelectedNote(note)
+    setShowDetailsModal(true)
+  }
+
+  const handleAuthorize = async (privateKey: string): Promise<boolean> => {
+    // Simulate authorization - replace with actual logic
+    console.log('Authorizing note access with:', privateKey)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return true
+  }
+
+  const getDisplayContent = (note: NoteItem) => {
+    if (note.encrypted && !showEncryptedContent[note.id]) {
+      return '🔒 This content is encrypted. Click the eye icon to view.'
+    }
+    return note.content
+  }
+
+  const isCopied = (noteId: string, field: string) => copiedItems.has(`${noteId}-${field}`)
+
+  const getEncryptionBadge = (encryptionLevel: string) => {
+    if (encryptionLevel === 'military') {
+      return <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">Military</span>
+    }
+    return <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full border border-blue-500/30">Standard</span>
   }
 
   const NoteCard = ({ note, index }: { note: NoteItem, index: number }) => (
@@ -199,19 +527,34 @@ export default function NotesPage() {
           <div>
             <h3 className="text-white font-semibold flex items-center gap-2">
               {note.title}
-              {note.favorite && <span className="text-yellow-400">★</span>}
+              <button
+                onClick={() => toggleFavorite(note.id)}
+                className="p-1 hover:scale-110 transition-transform"
+              >
+                {note.favorite ? (
+                  <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                ) : (
+                  <StarOff className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
             </h3>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-gray-400 text-sm">{note.category}</span>
-              {note.encrypted && <Lock className="w-3 h-3 text-green-400" />}
+              {note.encrypted && (
+                <div className="flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-green-400" />
+                  {getEncryptionBadge(note.encryptionLevel)}
+                </div>
+              )}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <button className="p-1 text-gray-400 hover:text-white transition-colors">
-            <MoreVertical className="w-4 h-4" />
-          </button>
-        </div>
+        <button 
+          onClick={() => handleViewDetails(note)}
+          className="p-1 text-gray-400 hover:text-white transition-colors"
+        >
+          <MoreVertical className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Content Preview */}
@@ -262,18 +605,20 @@ export default function NotesPage() {
           >
             <Download className="w-4 h-4" />
           </button>
+          {showEncryptedContent[note.id] && (
+            <button 
+              onClick={() => copyToClipboard(note.content, 'content', note.id)}
+              className="p-2 text-gray-400 hover:text-cyan-400 transition-colors"
+              title="Copy Content"
+            >
+              {isCopied(note.id, 'content') ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            </button>
+          )}
           <button 
-            onClick={() => copyToClipboard(note.content)}
-            className="p-2 text-gray-400 hover:text-cyan-400 transition-colors"
-            title="Copy Content"
+            onClick={() => handleViewDetails(note)}
+            className="p-2 text-gray-400 hover:text-blue-400 transition-colors"
           >
-            <Copy className="w-4 h-4" />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-blue-400 transition-colors">
-            <Edit className="w-4 h-4" />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-red-400 transition-colors">
-            <Trash2 className="w-4 h-4" />
+            <Eye className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -298,15 +643,32 @@ export default function NotesPage() {
           <div>
             <h3 className="text-white font-semibold flex items-center gap-2">
               {note.title}
-              {note.favorite && <span className="text-yellow-400 text-sm">★</span>}
+              <button
+                onClick={() => toggleFavorite(note.id)}
+                className="p-1 hover:scale-110 transition-transform"
+              >
+                {note.favorite ? (
+                  <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                ) : (
+                  <StarOff className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
             </h3>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-gray-400 text-sm">{note.category}</span>
-              {note.encrypted && <Lock className="w-3 h-3 text-green-400" />}
+              {note.encrypted && (
+                <div className="flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-green-400" />
+                  {getEncryptionBadge(note.encryptionLevel)}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button className="p-1 text-gray-400 hover:text-white transition-colors">
+            <button 
+              onClick={() => handleViewDetails(note)}
+              className="p-1 text-gray-400 hover:text-white transition-colors"
+            >
               <MoreVertical className="w-4 h-4" />
             </button>
           </div>
@@ -344,8 +706,11 @@ export default function NotesPage() {
                 {showEncryptedContent[note.id] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
               </button>
             )}
-            <button className="p-1 text-gray-400 hover:text-blue-400 transition-colors">
-              <Edit className="w-4 h-4" />
+            <button 
+              onClick={() => handleViewDetails(note)}
+              className="p-1 text-gray-400 hover:text-blue-400 transition-colors"
+            >
+              <Eye className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -422,8 +787,8 @@ export default function NotesPage() {
         {[
           { label: 'Total Notes', value: notes.length.toString(), color: 'text-blue-400', icon: StickyNote },
           { label: 'Encrypted', value: notes.filter(n => n.encrypted).length.toString(), color: 'text-green-400', icon: Lock },
-          { label: 'Favorites', value: notes.filter(n => n.favorite).length.toString(), color: 'text-yellow-400', icon: CheckCircle },
-          { label: 'Categories', value: categories.length.toString(), color: 'text-purple-400', icon: Tag }
+          { label: 'Favorites', value: notes.filter(n => n.favorite).length.toString(), color: 'text-yellow-400', icon: Star },
+          { label: 'Military Grade', value: notes.filter(n => n.encryptionLevel === 'military').length.toString(), color: 'text-purple-400', icon: Shield }
         ].map((stat, index) => (
           <motion.div
             key={stat.label}
@@ -537,6 +902,15 @@ export default function NotesPage() {
           </p>
         </motion.div>
       )}
+
+      {/* Note Details Modal */}
+      <NoteDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        note={selectedNote}
+        onAuthorize={handleAuthorize}
+        onToggleFavorite={toggleFavorite}
+      />
 
       {/* Security Notice */}
       <motion.div

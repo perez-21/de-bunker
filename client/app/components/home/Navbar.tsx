@@ -74,25 +74,30 @@ const connectWallet = async () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 lg:h-20">
             {/* Logo */}
-            <motion.div 
-              className="flex items-center gap-3"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <div className="relative">
-                <div className={`absolute inset-0 rounded-xl ${
-                  isScrolled ? 'bg-blue-500' : 'bg-blue-400'
-                } blur-md opacity-50`}></div>
-                <Cpu className="relative w-8 h-8 text-white" />
-              </div>
-              <span className={`text-xl font-bold bg-gradient-to-r ${
-                isScrolled 
-                  ? 'from-blue-400 to-cyan-300' 
-                  : 'from-white to-blue-100'
-              } bg-clip-text text-transparent`}>
-                DE-BUNKER
-              </span>
-            </motion.div>
+          <motion.div 
+  className="flex items-center gap-3"
+  whileHover={{ scale: 1.05 }}
+  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+>
+  <div className="relative">
+    <div className={`absolute inset-0 rounded-xl ${
+      isScrolled ? 'bg-blue-500' : 'bg-blue-400'
+    } blur-md opacity-50`}></div>
+    {/* Replace with your logo */}
+    <img 
+      src="/logo.png" 
+      alt="GWAG Logo" 
+      className="relative w-8 h-8 rounded-lg object-contain"
+    />
+  </div>
+  <span className={`text-xl font-bold bg-gradient-to-r ${
+    isScrolled 
+      ? 'from-blue-400 to-cyan-300' 
+      : 'from-white to-blue-100'
+  } bg-clip-text text-transparent`}>
+    GWAG
+  </span>
+</motion.div>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">

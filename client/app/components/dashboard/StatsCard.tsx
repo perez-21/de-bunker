@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from 'framer-motion'
-import { LucideIcon, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react'
+import { LucideIcon, Shield, AlertTriangle, CheckCircle2, Eye, Lock } from 'lucide-react'
 import { useState } from 'react'
 
 interface StatsCardProps {
@@ -9,13 +9,15 @@ interface StatsCardProps {
     icon: LucideIcon
     label: string
     value: string
-    change: string
-    trend: 'up' | 'down'
+    status: 'secure' | 'warning' | 'critical' | 'encrypted'
+    trend?: 'improving' | 'deteriorating'
     color: string
     description?: string
     onClick?: () => void
     isInteractive?: boolean
-    additionalInfo?: string
+    securityLevel?: 'low' | 'medium' | 'high'
+    lastUpdated?: string
+    itemsCount?: number
   }
   index: number
 }
@@ -25,13 +27,15 @@ const StatsCard = ({ stat, index }: StatsCardProps) => {
     icon: Icon, 
     label, 
     value, 
-    change, 
-    trend, 
+    status, 
+    trend,
     color, 
     description,
     onClick,
     isInteractive = false,
-    additionalInfo 
+    securityLevel,
+    lastUpdated,
+    itemsCount
   } = stat
 
   const [isHovered, setIsHovered] = useState(false)
@@ -39,6 +43,49 @@ const StatsCard = ({ stat, index }: StatsCardProps) => {
   const handleClick = () => {
     if (isInteractive && onClick) {
       onClick()
+    }
+  }
+
+  const getStatusIcon = () => {
+    switch (status) {
+      case 'secure':
+        return <Shield className="w-4 h-4 text-green-400" />
+      case 'warning':
+        return <AlertTriangle className="w-4 h-4 text-yellow-400" />
+      case 'critical':
+        return <AlertTriangle className="w-4 h-4 text-red-400" />
+      case 'encrypted':
+        return <Lock className="w-4 h-4 text-blue-400" />
+      default:
+        return <Eye className="w-4 h-4 text-gray-400" />
+    }
+  }
+
+  const getStatusText = () => {
+    switch (status) {
+      case 'secure':
+        return 'Secure'
+      case 'warning':
+        return 'Needs Attention'
+      case 'critical':
+        return 'Critical'
+      case 'encrypted':
+        return 'Encrypted'
+      default:
+        return 'Unknown'
+    }
+  }
+
+  const getSecurityLevelColor = () => {
+    switch (securityLevel) {
+      case 'high':
+        return 'bg-green-500/20 text-green-400 border-green-500/30'
+      case 'medium':
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+      case 'low':
+        return 'bg-red-500/20 text-red-400 border-red-500/30'
+      default:
+        return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
     }
   }
 
@@ -59,6 +106,9 @@ const StatsCard = ({ stat, index }: StatsCardProps) => {
         bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 
         transition-all duration-300 relative overflow-hidden
         ${isInteractive ? 'cursor-pointer hover:shadow-lg hover:shadow-cyan-500/10' : ''}
+        ${status === 'critical' ? 'border-red-500/30 bg-red-500/5' : ''}
+        ${status === 'warning' ? 'border-yellow-500/30 bg-yellow-500/5' : ''}
+        ${status === 'secure' ? 'border-green-500/30 bg-green-500/5' : ''}
       `}
     >
       {/* Background Glow Effect on Hover */}
@@ -70,16 +120,19 @@ const StatsCard = ({ stat, index }: StatsCardProps) => {
         />
       )}
 
-      {/* Click Indicator Arrow */}
-      {isInteractive && (
-        <motion.div
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : 10 }}
-          className="absolute top-4 right-4 text-cyan-400"
-        >
-          <ArrowRight className="w-4 h-4" />
-        </motion.div>
-      )}
+      {/* Security Status Badge */}
+      <motion.div 
+        className={`flex items-center gap-2 absolute top-4 right-4 ${
+          status === 'critical' ? 'text-red-400' :
+          status === 'warning' ? 'text-yellow-400' :
+          status === 'secure' ? 'text-green-400' :
+          'text-blue-400'
+        }`}
+        whileHover={{ scale: 1.1 }}
+      >
+        {getStatusIcon()}
+        <span className="text-xs font-medium">{getStatusText()}</span>
+      </motion.div>
 
       <div className="flex items-center justify-between mb-4">
         <motion.div 
@@ -97,19 +150,22 @@ const StatsCard = ({ stat, index }: StatsCardProps) => {
           <Icon className="w-6 h-6 text-white relative z-10" />
         </motion.div>
         
-        <motion.div 
-          className={`flex items-center gap-1 text-sm font-medium ${
-            trend === 'up' ? 'text-green-400' : 'text-red-400'
-          }`}
-          whileHover={{ scale: 1.05 }}
-        >
-          {trend === 'up' ? (
-            <TrendingUp className="w-4 h-4" />
-          ) : (
-            <TrendingDown className="w-4 h-4" />
-          )}
-          <span>{change}</span>
-        </motion.div>
+        {/* Trend Indicator */}
+        {trend && (
+          <motion.div 
+            className={`flex items-center gap-1 text-sm font-medium ${
+              trend === 'improving' ? 'text-green-400' : 'text-red-400'
+            }`}
+            whileHover={{ scale: 1.05 }}
+          >
+            {trend === 'improving' ? (
+              <CheckCircle2 className="w-4 h-4" />
+            ) : (
+              <AlertTriangle className="w-4 h-4" />
+            )}
+            <span className="text-xs">{trend === 'improving' ? 'Improving' : 'Deteriorating'}</span>
+          </motion.div>
+        )}
       </div>
       
       <motion.h3 
@@ -122,47 +178,76 @@ const StatsCard = ({ stat, index }: StatsCardProps) => {
       
       <p className="text-gray-400 text-sm mb-2">{label}</p>
       
-      {/* Additional Information */}
+      {/* Items Count */}
+      {itemsCount !== undefined && (
+        <motion.div 
+          className="flex items-center gap-2 text-xs text-gray-500 mb-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <Eye className="w-3 h-3" />
+          <span>{itemsCount} items secured</span>
+        </motion.div>
+      )}
+
+      {/* Security Level Badge */}
+      {securityLevel && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`inline-flex items-center gap-1 rounded-full px-2 py-1 mt-2 border ${getSecurityLevelColor()}`}
+        >
+          <Shield className="w-3 h-3" />
+          <span className="text-xs font-medium capitalize">{securityLevel} security</span>
+        </motion.div>
+      )}
+
+      {/* Description */}
       {description && (
         <motion.p 
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="text-gray-500 text-xs mt-2"
+          className="text-gray-500 text-xs mt-3"
         >
           {description}
         </motion.p>
       )}
 
-      {/* Additional Info Badge */}
-      {additionalInfo && (
+      {/* Last Updated */}
+      {lastUpdated && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="inline-flex items-center gap-1 bg-gray-700/50 rounded-full px-2 py-1 mt-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-gray-600 text-xs mt-2"
         >
-          <span className="text-cyan-400 text-xs">ⓘ</span>
-          <span className="text-gray-400 text-xs">{additionalInfo}</span>
+          Updated {lastUpdated}
         </motion.div>
       )}
 
-      {/* Progress Bar for certain metrics */}
-      {(label.includes('Balance') || label.includes('Volume')) && (
-        <motion.div
+      {/* Security Progress Bar */}
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: '100%' }}
+        transition={{ duration: 1, delay: index * 0.2 }}
+        className="w-full bg-gray-700 rounded-full h-1.5 mt-3"
+      >
+        <motion.div 
+          className={`h-1.5 rounded-full ${
+            status === 'secure' ? 'bg-green-500' :
+            status === 'warning' ? 'bg-yellow-500' :
+            status === 'critical' ? 'bg-red-500' :
+            'bg-blue-500'
+          } ${trend === 'improving' ? 'animate-pulse' : ''}`}
           initial={{ width: 0 }}
-          animate={{ width: '100%' }}
-          transition={{ duration: 1, delay: index * 0.2 }}
-          className="w-full bg-gray-700 rounded-full h-1 mt-3"
-        >
-          <div 
-            className={`h-1 rounded-full bg-gradient-to-r ${color} ${
-              trend === 'up' ? 'animate-pulse' : ''
-            }`}
-            style={{ 
-              width: trend === 'up' ? '75%' : '40%' 
-            }}
-          />
-        </motion.div>
-      )}
+          animate={{ width: 
+            status === 'secure' ? '90%' :
+            status === 'warning' ? '60%' :
+            status === 'critical' ? '30%' :
+            '75%'
+          }}
+          transition={{ duration: 1, delay: index * 0.3 }}
+        />
+      </motion.div>
     </motion.div>
   )
 }
